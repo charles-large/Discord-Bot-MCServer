@@ -1,5 +1,6 @@
 import json 
-import os 
+import os
+import boto3 
 from nacl.signing import VerifyKey 
 from nacl.exceptions import BadSignatureError 
 
@@ -22,10 +23,40 @@ def lambda_handler(event, context):
              'body': json.dumps({'type': 1})
          }
         else:
-            return {
-             'statusCode': 200, 
-             'body': json.dumps({'type': '4', 'data': {'content': 'This worked'}})
-         }
+            client = boto3.client('cloudformation')
+            def checkCFStatus(StackName):
+                response = client.describe_stacks(StackName = StackName)
+                try:
+                    if response['StackStatus'] == "CREATE_IN_PROGRESS":
+                        return {
+                        'statusCode': 200, 
+                        'body': json.dumps({'type': '4', 'data': {'content': 'Server is still starting'}})
+                    }
+                    elif response['StackStatus'] == "CREATE_COMPLETE":
+                        return {
+                        'statusCode': 200, 
+                        'body': json.dumps({'type': '4', 'data': {'content': 'Server has started'}})
+                    }
+                    else:
+                        return {
+                        'statusCode': 200, 
+                        'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {}'}})
+                    }
+                except AmazonCloudFormationException:
+                    return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'Unknown Stack Name'}})
+                    }
+                except Exception as e:
+                    print(e)
+                    return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'An error occured'}})
+                    }
+                    
+
+            checkCFStatus(os.environ['StackName'])
+
     except (BadSignatureError) as e:
         return {
              'statusCode': 401, 
