@@ -38,9 +38,10 @@ def lambda_handler(event, context):
                         'body': json.dumps({'type': '4', 'data': {'content': 'Server has started'}})
                     }
                     else:
+                        StackStatus = response['StackStatus']
                         return {
                         'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {}'}})
+                        'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {StackStatus}'}})
                         }
                 except Exception as e:
                     print(e)
