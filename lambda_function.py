@@ -50,7 +50,7 @@ def lambda_handler(event, context):
                     'body': json.dumps({'type': '4', 'data': {'content': 'An error occured'}})
                     }
                     
-            checkCFStatus(os.environ['StackName'])
+            return checkCFStatus(os.environ['StackName'])
 
     except (BadSignatureError) as e:
         return {
