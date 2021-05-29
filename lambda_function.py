@@ -44,12 +44,22 @@ def lambda_handler(event, context):
                         'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {StackStatus}'}})
                         }
                 except Exception as e:
-                    print(e.response)
-                    return {
-                    'statusCode': 200, 
-                    'body': json.dumps({'type': '4', 'data': {'content': 'An error occured'}})
+                    if e.response['Error']['Code'] == "ValidationError":
+                        template_url = "https://cf-templates-17vfm34f5w9b5-us-east-1.s3.amazonaws.com/2021147IUX-mcServerDeploy.yml"
+                        try:
+                            response = client.create_stack(StackName=StackName, TemplateURL=template_url)
+                            return {
+                            'statusCode': 200, 
+                            'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
+                            }
+                        except Exception as e:
+                            print(e)
+                            print(e.response)
+                            return {
+                            'statusCode': 200, 
+                            'body': json.dumps({'type': '4', 'data': {'content': 'An exception occured'}})
                     }
-                    
+
             return checkCFStatus(os.environ['StackName'])
 
     except (BadSignatureError) as e:
