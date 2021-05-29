@@ -27,12 +27,13 @@ def lambda_handler(event, context):
             def checkCFStatus(StackName):
                 try:
                     response = client.describe_stacks(StackName = StackName)
-                    if response['StackStatus'] == "CREATE_IN_PROGRESS":
+                    
+                    if response['Stacks']['StackStatus'] == "CREATE_IN_PROGRESS":
                         return {
                         'statusCode': 200, 
                         'body': json.dumps({'type': '4', 'data': {'content': 'Server is still starting'}})
                     }
-                    elif response['StackStatus'] == "CREATE_COMPLETE":
+                    elif response['Stacks']['StackStatus'] == "CREATE_COMPLETE":
                         return {
                         'statusCode': 200, 
                         'body': json.dumps({'type': '4', 'data': {'content': 'Server has started'}})
