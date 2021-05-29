@@ -42,8 +42,8 @@ def lambda_handler(event, context):
                         'statusCode': 200, 
                         'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {}'}})
                         }
-                except Exception as f:
-                    print(f)
+                except Exception as b:
+                    print(b)
                     return {
                     'statusCode': 200, 
                     'body': json.dumps({'type': '4', 'data': {'content': 'An error occured'}})
