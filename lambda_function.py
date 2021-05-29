@@ -46,8 +46,9 @@ def lambda_handler(event, context):
                 except Exception as e:
                     if e.response['Error']['Code'] == "ValidationError":
                         template_url = "https://cf-templates-17vfm34f5w9b5-us-east-1.s3.amazonaws.com/2021147IUX-mcServerDeploy.yml"
+                        Role_ARN = "arn:aws:iam::832167807522:role/CloudFormationServiceRole"
                         try:
-                            response = client.create_stack(StackName=StackName, TemplateURL=template_url)
+                            response = client.create_stack(StackName=StackName, TemplateURL=template_url, RoleARN=Role_ARN)
                             return {
                             'statusCode': 200, 
                             'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
