@@ -25,8 +25,8 @@ def lambda_handler(event, context):
         else:
             client = boto3.client('cloudformation')
             def checkCFStatus(StackName):
-                response = client.describe_stacks(StackName = StackName)
                 try:
+                    response = client.describe_stacks(StackName = StackName)
                     if response['StackStatus'] == "CREATE_IN_PROGRESS":
                         return {
                         'statusCode': 200, 
