@@ -44,6 +44,7 @@ def lambda_handler(event, context):
                         'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {StackStatus}'}})
                         }
                 except Exception as e:
+                    print(e)
                     if e.response['Error']['Code'] == "ValidationError":
                         template_url = "https://cf-templates-17vfm34f5w9b5-us-east-1.s3.amazonaws.com/2021147IUX-mcServerDeploy.yml"
                         Role_ARN = "arn:aws:iam::832167807522:role/CloudFormationServiceRole"
