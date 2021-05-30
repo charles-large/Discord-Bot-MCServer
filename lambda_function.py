@@ -22,6 +22,7 @@ def ValidationError(exception):
         }  
 
 def ReturnStackStatus(response):
+    print("Executing?")
     StackStatus = response['Stacks'][0]['StackStatus']
     
     if StackStatus == "CREATE_IN_PROGRESS":
@@ -69,6 +70,7 @@ def lambda_handler(event, context):
             try:
                 print("executing")
                 response = client.describe_stacks(StackName = StackName)
+                ReturnStackStatus(response)
             except Exception as e:
                 print(e)
                 if e.response['Error']['Code'] == "ValidationError":
@@ -86,7 +88,7 @@ def lambda_handler(event, context):
                         'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
                 }    
             
-            ReturnStackStatus(response)
+            
             
         elif json_body['data']['options'][0]['value'] == "status":
             try:
