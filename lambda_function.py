@@ -72,7 +72,7 @@ def lambda_handler(event, context):
             try:
                 print("executing")
                 response = client.describe_stacks(StackName = StackName)
-                ReturnStackStatus(response)
+                return ReturnStackStatus(response)
             except Exception as e:
                 print(e)
                 if e.response['Error']['Code'] == "ValidationError":
