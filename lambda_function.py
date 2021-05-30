@@ -24,6 +24,8 @@ def ValidationError(exception):
 def ReturnStackStatus(response):
     print("Executing?")
     StackStatus = response['Stacks'][0]['StackStatus']
+    print(response)
+    print(StackStatus)
     
     if StackStatus == "CREATE_IN_PROGRESS":
         return {
