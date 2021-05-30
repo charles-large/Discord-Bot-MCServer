@@ -64,9 +64,10 @@ def lambda_handler(event, context):
 
     client = boto3.client('cloudformation')
     def checkCFStatus(StackName):
-        
+        print(json_body)
         if json_body['data']['options'][0]['value'] == "start":        
             try:
+                print("executing")
                 response = client.describe_stacks(StackName = StackName)
             except Exception as e:
                 print(e)
