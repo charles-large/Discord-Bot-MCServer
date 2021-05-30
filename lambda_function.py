@@ -33,6 +33,7 @@ def ReturnStackStatus(response):
         'body': json.dumps({'type': '4', 'data': {'content': 'Server is still starting'}})
     }
     elif StackStatus == "CREATE_COMPLETE":
+        print("test")
         return {
         'statusCode': 200, 
         'body': json.dumps({'type': '4', 'data': {'content': 'Server is running'}})
@@ -107,7 +108,7 @@ def lambda_handler(event, context):
                 ValidationError(e)
 
     
-    checkCFStatus(STACK_NAME)
+    return checkCFStatus(STACK_NAME)
 
     
     
