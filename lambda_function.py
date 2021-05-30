@@ -22,11 +22,7 @@ def ValidationError(exception):
         }  
 
 def ReturnStackStatus(response):
-    print("Executing?")
     StackStatus = response['Stacks'][0]['StackStatus']
-    print(response)
-    print(StackStatus)
-    
     if StackStatus == "CREATE_IN_PROGRESS":
         return {
         'statusCode': 200, 
@@ -43,35 +39,10 @@ def ReturnStackStatus(response):
         'body': json.dumps({'type': '4', 'data': {'content': f'Current Stack Status: {StackStatus}'}})
     }
 
-
-def lambda_handler(event, context):
-
-    verify_key = VerifyKey(bytes.fromhex(PUBLIC_KEY))
-    
-    signature = event['headers']["x-signature-ed25519"] 
-    timestamp = event['headers']["x-signature-timestamp"] 
-    body = event['body']
-    json_body = json.loads(event['body'])
-
-    try: 
-        verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
-        if json_body["type"] == 1:
-            return {
-             'statusCode': 200, 
-             'body': json.dumps({'type': 1})
-         }
-    except (BadSignatureError) as e:
-        return {
-             'statusCode': 401, 
-             'body': json.dumps("Bad Signature")
-         } 
-
-    client = boto3.client('cloudformation')
-    def checkCFStatus(StackName):
-        print(json_body)
+def checkCFStatus(StackName, json_body):
+        client = boto3.client('cloudformation')
         if json_body['data']['options'][0]['value'] == "start":        
             try:
-                print("executing")
                 response = client.describe_stacks(StackName = StackName)
                 return ReturnStackStatus(response)
             except Exception as e:
@@ -112,8 +83,27 @@ def lambda_handler(event, context):
             except Exception as e:
                 return ValidationError(e)
 
-    
-    return checkCFStatus(STACK_NAME)
+
+def lambda_handler(event, context):
+    verify_key = VerifyKey(bytes.fromhex(PUBLIC_KEY))
+    signature = event['headers']["x-signature-ed25519"] 
+    timestamp = event['headers']["x-signature-timestamp"] 
+    body = event['body']
+    json_body = json.loads(event['body'])
+
+    try: 
+        verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
+        if json_body["type"] == 1:
+            return {
+             'statusCode': 200, 
+             'body': json.dumps({'type': 1})
+         }
+    except (BadSignatureError) as e:
+        return {
+             'statusCode': 401, 
+             'body': json.dumps("Bad Signature")
+         } 
+    return checkCFStatus(STACK_NAME, json_body)
 
     
     
