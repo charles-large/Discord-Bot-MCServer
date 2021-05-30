@@ -47,11 +47,11 @@ def lambda_handler(event, context):
     signature = event['headers']["x-signature-ed25519"] 
     timestamp = event['headers']["x-signature-timestamp"] 
     body = event['body']
+    json_body = json.loads(event['body'])
 
     try: 
         verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
-        body = json.loads(event['body'])
-        if body["type"] == 1:
+        if json_body["type"] == 1:
             return {
              'statusCode': 200, 
              'body': json.dumps({'type': 1})
@@ -65,7 +65,7 @@ def lambda_handler(event, context):
     client = boto3.client('cloudformation')
     def checkCFStatus(StackName):
         
-        if body['options'][0]['value'] == "start":        
+        if json_body['options'][0]['value'] == "start":        
             try:
                 response = client.describe_stacks(StackName = StackName)
             except Exception as e:
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
             
             ReturnStackStatus(response)
             
-        elif body['options'][0]['value'] == "status":
+        elif json_body['options'][0]['value'] == "status":
             try:
                 response = client.describe_stacks(StackName=StackName)
             except Exception as e:
@@ -95,7 +95,7 @@ def lambda_handler(event, context):
 
             # StackStatus = response['StackStatus']
             ReturnStackStatus(response)
-        elif body['options'][0]['value'] == "stop":
+        elif json_body['options'][0]['value'] == "stop":
             try:
                 response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN)
             except Exception as e:
