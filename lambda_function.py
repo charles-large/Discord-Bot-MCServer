@@ -65,7 +65,7 @@ def lambda_handler(event, context):
     client = boto3.client('cloudformation')
     def checkCFStatus(StackName):
         
-        if event['path'] == "/api/start":        
+        if body['options'][0]['value'] == "start":        
             try:
                 response = client.describe_stacks(StackName = StackName)
             except Exception as e:
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
             
             ReturnStackStatus(response)
             
-        elif event['path'] == "/api/status":
+        elif body['options'][0]['value'] == "status":
             try:
                 response = client.describe_stacks(StackName=StackName)
             except Exception as e:
@@ -95,7 +95,7 @@ def lambda_handler(event, context):
 
             # StackStatus = response['StackStatus']
             ReturnStackStatus(response)
-        elif event['path'] == "/api/stop":
+        elif body['options'][0]['value'] == "stop":
             try:
                 response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN)
             except Exception as e:
