@@ -4,10 +4,44 @@ import boto3
 from nacl.signing import VerifyKey 
 from nacl.exceptions import BadSignatureError 
 
+TEMPLATE_URL = os.environ['template_url']
+ROLE_ARN = os.environ['ROLE_ARN']
+STACK_NAME = os.environ['StackName']
+PUBLIC_KEY = os.environ['DISCORD_PUBLIC_KEY']
+
+def ValidationError(exception):
+    if exception.response['Error']['Code'] == "ValidationError":
+        return {
+            'statusCode': 200, 
+            'body': json.dumps({'type': '4', 'data': {'content': 'Server is not online'}})
+        }
+
+    return {
+            'statusCode': 200, 
+            'body': json.dumps({'type': '4', 'data': {'content': 'An error occured'}})
+        }  
+
+def ReturnStackStatus(response):
+    StackStatus = response['Stacks'][0]['StackStatus']
+    
+    if StackStatus == "CREATE_IN_PROGRESS":
+        return {
+        'statusCode': 200, 
+        'body': json.dumps({'type': '4', 'data': {'content': 'Server is still starting'}})
+    }
+    elif StackStatus == "CREATE_COMPLETE":
+        return {
+        'statusCode': 200, 
+        'body': json.dumps({'type': '4', 'data': {'content': 'Server is running'}})
+    }
+    return {
+       'statusCode': 200, 
+        'body': json.dumps({'type': '4', 'data': {'content': f'Current Stack Status: {StackStatus}'}})
+    }
+
+
 def lambda_handler(event, context):
 
-    PUBLIC_KEY = os.environ['DISCORD_PUBLIC_KEY']
-    
     verify_key = VerifyKey(bytes.fromhex(PUBLIC_KEY))
     
     signature = event['headers']["x-signature-ed25519"] 
@@ -22,53 +56,52 @@ def lambda_handler(event, context):
              'statusCode': 200, 
              'body': json.dumps({'type': 1})
          }
-        else:
-            client = boto3.client('cloudformation')
-            def checkCFStatus(StackName):
-                try:
-                    response = client.describe_stacks(StackName = StackName)
-                    print(response)
-                    print(type(response))
-                    if response['Stacks'][0]['StackStatus'] == "CREATE_IN_PROGRESS":
-                        return {
-                        'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': 'Server is still starting'}})
-                    }
-                    elif response['Stacks'][0]['StackStatus'] == "CREATE_COMPLETE":
-                        return {
-                        'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': 'Server has started'}})
-                    }
-                    else:
-                        StackStatus = response['StackStatus']
-                        return {
-                        'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': f'Stack Status {StackStatus}'}})
-                        }
-                except Exception as e:
-                    print(e)
-                    if e.response['Error']['Code'] == "ValidationError":
-                        template_url = "https://cf-templates-17vfm34f5w9b5-us-east-1.s3.amazonaws.com/2021147IUX-mcServerDeploy.yml"
-                        Role_ARN = "arn:aws:iam::832167807522:role/CloudFormationServiceRole"
-                        try:
-                            response = client.create_stack(StackName=StackName, TemplateURL=template_url, RoleARN=Role_ARN)
-                            return {
-                            'statusCode': 200, 
-                            'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
-                            }
-                        except Exception as e:
-                            print(e)
-                            print(e.response)
-                            return {
-                            'statusCode': 200, 
-                            'body': json.dumps({'type': '4', 'data': {'content': 'An exception occured'}})
-                    }
-
-            return checkCFStatus(os.environ['StackName'])
-
     except (BadSignatureError) as e:
         return {
              'statusCode': 401, 
              'body': json.dumps("Bad Signature")
          } 
+
+    client = boto3.client('cloudformation')
+    def checkCFStatus(StackName):
+        
+        if event['path'] == "/api/start":        
+            try:
+                response = client.describe_stacks(StackName = StackName)
+            except Exception as e:
+                print(e)
+                if e.response['Error']['Code'] == "ValidationError":
+                    try:
+                        response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN)
+                        return {
+                        'statusCode': 200, 
+                        'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
+                        }
+                    except Exception as e:
+                        print(e)
+                        print(e.response)
+                        return {
+                        'statusCode': 200, 
+                        'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
+                }    
+            
+            ReturnStackStatus(response)
+            
+        elif event['path'] == "/api/status":
+            try:
+                response = client.describe_stacks(StackName=StackName)
+            except Exception as e:
+                ValidationError(e)
+                
+            # StackStatus = response['StackStatus']
+            ReturnStackStatus(response)
+        elif event['path'] == "/api/stop":
+            try:
+                response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN)
+            except Exception as e:
+                ValidationError(e)
+
+        checkCFStatus(STACK_NAME)
+
+    
     
