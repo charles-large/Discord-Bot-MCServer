@@ -103,7 +103,8 @@ def lambda_handler(event, context):
             
         elif json_body['data']['options'][0]['value'] == "stop":
             try:
-                response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN)
+                response = client.describe_stacks(StackName=StackName) #Check to see if template is deployed
+                response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN) #If so delete the stack
                 return {
                         'statusCode': 200, 
                         'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
