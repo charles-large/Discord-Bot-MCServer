@@ -96,16 +96,16 @@ def lambda_handler(event, context):
         elif json_body['data']['options'][0]['value'] == "status":
             try:
                 response = client.describe_stacks(StackName=StackName)
+                return ReturnStackStatus(response)
             except Exception as e:
-                ValidationError(e)
+                return ValidationError(e)
 
-            # StackStatus = response['StackStatus']
-            ReturnStackStatus(response)
+            
         elif json_body['data']['options'][0]['value'] == "stop":
             try:
                 response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN)
             except Exception as e:
-                ValidationError(e)
+                return ValidationError(e)
 
     
     return checkCFStatus(STACK_NAME)
