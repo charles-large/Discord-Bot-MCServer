@@ -92,7 +92,7 @@ def lambda_handler(event, context):
                 response = client.describe_stacks(StackName=StackName)
             except Exception as e:
                 ValidationError(e)
-                
+
             # StackStatus = response['StackStatus']
             ReturnStackStatus(response)
         elif event['path'] == "/api/stop":
@@ -101,7 +101,8 @@ def lambda_handler(event, context):
             except Exception as e:
                 ValidationError(e)
 
-        checkCFStatus(STACK_NAME)
+    
+    checkCFStatus(STACK_NAME)
 
     
     
