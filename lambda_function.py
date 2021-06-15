@@ -10,6 +10,7 @@ STACK_NAME = os.environ['StackName']
 PUBLIC_KEY = os.environ['DISCORD_PUBLIC_KEY']
 
 def ValidationError(exception):
+    """Returns if Stack Name does not exist"""
     if exception.response['Error']['Code'] == "ValidationError":
         return {
             'statusCode': 200, 
@@ -22,6 +23,7 @@ def ValidationError(exception):
         }  
 
 def ReturnStackStatus(response):
+    """Checks the Stack Status"""
     StackStatus = response['Stacks'][0]['StackStatus']
     if StackStatus == "CREATE_IN_PROGRESS":
         return {
@@ -39,49 +41,50 @@ def ReturnStackStatus(response):
         'body': json.dumps({'type': '4', 'data': {'content': f'Current Stack Status: {StackStatus}'}})
     }
 
-def checkCFStatus(StackName, json_body):
-        client = boto3.client('cloudformation')
-        if json_body['data']['options'][0]['value'] == "start":        
-            try:
-                response = client.describe_stacks(StackName = StackName)
-                return ReturnStackStatus(response)
-            except Exception as e:
-                print(e)
-                if e.response['Error']['Code'] == "ValidationError":
-                    try:
-                        response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN)
-                        return {
-                        'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
-                        }
-                    except Exception as e:
-                        print(e)
-                        print(e.response)
-                        return {
-                        'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
-                }    
+def GetCommand(StackName, json_body):
+    """Get discord value and take CF action"""
+    client = boto3.client('cloudformation')
+    if json_body['data']['options'][0]['value'] == "start":        
+        try:
+            response = client.describe_stacks(StackName = StackName)
+            return ReturnStackStatus(response)
+        except Exception as e:
+            print(e)
+            if e.response['Error']['Code'] == "ValidationError":
+                try:
+                    response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN)
+                    return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
+                    }
+                except Exception as e:
+                    print(e)
+                    print(e.response)
+                    return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
+            }    
             
             
             
-        elif json_body['data']['options'][0]['value'] == "status":
-            try:
-                response = client.describe_stacks(StackName=StackName)
-                return ReturnStackStatus(response)
-            except Exception as e:
-                return ValidationError(e)
+    elif json_body['data']['options'][0]['value'] == "status":
+        try:
+            response = client.describe_stacks(StackName=StackName)
+            return ReturnStackStatus(response)
+        except Exception as e:
+            return ValidationError(e)
 
-            
-        elif json_body['data']['options'][0]['value'] == "stop":
-            try:
-                response = client.describe_stacks(StackName=StackName) #Check to see if template is deployed
-                response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN) #If so delete the stack
-                return {
-                        'statusCode': 200, 
-                        'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
-                }    
-            except Exception as e:
-                return ValidationError(e)
+        
+    elif json_body['data']['options'][0]['value'] == "stop":
+        try:
+            response = client.describe_stacks(StackName=StackName) #Check to see if template is deployed
+            response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN) #If so delete the stack
+            return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
+            }    
+        except Exception as e:
+            return ValidationError(e)
 
 
 def lambda_handler(event, context):
@@ -90,6 +93,7 @@ def lambda_handler(event, context):
     timestamp = event['headers']["x-signature-timestamp"] 
     body = event['body']
     json_body = json.loads(event['body'])
+    print(json_body)
 
     try: 
         verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
@@ -103,7 +107,7 @@ def lambda_handler(event, context):
              'statusCode': 401, 
              'body': json.dumps("Bad Signature")
          } 
-    return checkCFStatus(STACK_NAME, json_body)
+    return GetCommand(STACK_NAME, json_body)
 
     
     
