@@ -54,7 +54,7 @@ def GetCommand(StackName, json_body):
             data = {"content": json.dumps("Take Over")}  
             test = (ReturnStackStatus(response), requests.post(url, data=data))
             for x in test:
-                yield x
+                yield json.dumps(x)
             # return ReturnStackStatus(response)
         except Exception as e:
             print(e)
