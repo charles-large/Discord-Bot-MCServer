@@ -58,7 +58,7 @@ def GetCommand(StackName, json_body):
             for x in test():
                 print(x)
                 return x
-            return ReturnStackStatus(response)
+            # return ReturnStackStatus(response)
         except Exception as e:
             print(e)
             if e.response['Error']['Code'] == "ValidationError":
