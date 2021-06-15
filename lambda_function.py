@@ -52,12 +52,9 @@ def GetCommand(StackName, json_body):
             url = f"https://discord.com/api/webhooks/{application_id}/{token}"
             response = client.describe_stacks(StackName = StackName)
             data = {"content": json.dumps("Take Over")}  
-            def test():
-                yield ReturnStackStatus(response)
-                yield requests.post(url, data=data)
-            for x in test():
-                print(x)
-                return x
+            test = (ReturnStackStatus(response), requests.post(url, data=data))
+            for x in test:
+                yield x
             # return ReturnStackStatus(response)
         except Exception as e:
             print(e)
