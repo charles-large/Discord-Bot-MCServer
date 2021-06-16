@@ -60,7 +60,7 @@ def GetCommand(StackName, json_body):
                         response = client.invoke(
                         FunctionName='DiscordFollowUp',
                         InvocationType='Event',
-                        Payload=json.dumps({'token': token, 'application_id': application_id}).encode()
+                        Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': StackName}).encode()
                         )
                     except Exception as e:
                         print(e)
