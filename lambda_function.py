@@ -1,7 +1,6 @@
 import json 
 import os
 import boto3
-import requests
 from nacl.signing import VerifyKey 
 from nacl.exceptions import BadSignatureError 
 
@@ -47,20 +46,24 @@ def GetCommand(StackName, json_body):
     client = boto3.client('cloudformation')
     if json_body['data']['options'][0]['value'] == "start":        
         try:
-            application_id = json_body['application_id']
-            token = json_body['token']
-            url = f"https://discord.com/api/webhooks/{application_id}/{token}"
             response = client.describe_stacks(StackName = StackName)
-            data = {"content": json.dumps("Take Over")}  
-            test = (ReturnStackStatus(response), requests.post(url, data=data))
-            for x in test:
-                yield json.dumps(x)
-            # return ReturnStackStatus(response)
+            return ReturnStackStatus(response)
         except Exception as e:
             print(e)
             if e.response['Error']['Code'] == "ValidationError":
+                application_id = json_body['application_id']
+                token = json_body['token']
                 try:
                     response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN)
+                    client = boto3.client('lambda')
+                    try:
+                        response = client.invoke(
+                        FunctionName='DiscordFollowUp',
+                        InvocationType='Event',
+                        Payload=json.dumps({'token': token, 'application_id': application_id})
+                        )
+                    except Exception as e:
+                        print(e)
                     return {
                     'statusCode': 200, 
                     'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
