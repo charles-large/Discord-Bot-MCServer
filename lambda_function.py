@@ -88,8 +88,19 @@ def GetCommand(StackName, json_body):
         
     elif json_body['data']['options'][0]['value'] == "stop":
         try:
+            application_id = json_body['application_id']
+            token = json_body['token']
             response = client.describe_stacks(StackName=StackName) #Check to see if template is deployed
             response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN) #If so delete the stack
+            try:
+                client = boto3.client('lambda')
+                response = client.invoke(
+                FunctionName='DiscordFollowUp',
+                InvocationType='Event',
+                Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': StackName}).encode()
+                )
+            except Exception as e:
+                print(e)
             return {
                     'statusCode': 200, 
                     'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
