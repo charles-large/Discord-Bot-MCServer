@@ -54,7 +54,7 @@ def GetCommand(StackName, json_body):
                 application_id = json_body['application_id']
                 token = json_body['token']
                 try:
-                    response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN)
+                    response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Capabilities=['CAPABILITY_IAM'])
                     client = boto3.client('lambda')
                     try:
                         response = client.invoke(
