@@ -8,6 +8,7 @@ TEMPLATE_URL = os.environ['template_url']
 ROLE_ARN = os.environ['ROLE_ARN']
 STACK_NAME = os.environ['StackName']
 PUBLIC_KEY = os.environ['DISCORD_PUBLIC_KEY']
+LAMBDA_FOLLOWUP = os.environ['LAMBDA_FOLLOWUP']
 
 def ValidationError(exception):
     """Returns if Stack Name does not exist"""
@@ -48,9 +49,9 @@ def lambda_handler(event, context):
     timestamp = event['headers']["x-signature-timestamp"] 
     body = event['body']
     json_body = json.loads(event['body'])
-    # print(json_body)
 
-    try: 
+    try:
+        #Verify signatures of body with Discord Public Key#
         verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
         if json_body["type"] == 1:
             return {
@@ -63,7 +64,7 @@ def lambda_handler(event, context):
              'body': json.dumps("Bad Signature")
          } 
     
-    """Get discord value and take CF action"""
+    #Get discord value and take CF action#
     client = boto3.client('cloudformation')
     if json_body['data']['options'][0]['value'] == "start":        
         try:
@@ -71,15 +72,18 @@ def lambda_handler(event, context):
             return ReturnStackStatus(response)
         except Exception as e:
             print(e)
+            #If the Stack does not exist#
             if e.response['Error']['Code'] == "ValidationError":
                 application_id = json_body['application_id']
                 token = json_body['token']
                 try:
+                    #Create the Stack#
                     response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Capabilities=['CAPABILITY_IAM'])
                     client = boto3.client('lambda')
                     try:
+                        #Invoke async Lambda function to send follow up message with application IP#
                         response = client.invoke(
-                        FunctionName='DiscordFollowUp',
+                        FunctionName=LAMBDA_FOLLOWUP,
                         InvocationType='Event',
                         Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': STACK_NAME}).encode()
                         )
@@ -97,6 +101,7 @@ def lambda_handler(event, context):
                     'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
             }
     elif json_body['data']['options'][0]['value'] == "status":
+        #Checks the status of deployed stack#
         try:
             response = client.describe_stacks(StackName=STACK_NAME)
             return ReturnStackStatus(response)
@@ -105,15 +110,17 @@ def lambda_handler(event, context):
 
         
     elif json_body['data']['options'][0]['value'] == "stop":
+        #Destroys Stack if deployed#
         try:
             application_id = json_body['application_id']
             token = json_body['token']
             response = client.describe_stacks(StackName=STACK_NAME) #Check to see if template is deployed
             response = client.delete_stack(StackName=STACK_NAME, RoleARN=ROLE_ARN) #If so delete the stack
             try:
+                #Invoke async Lambda function to send follow up once Stack is deleted#
                 client = boto3.client('lambda')
                 response = client.invoke(
-                FunctionName='DiscordFollowUp',
+                FunctionName=LAMBDA_FOLLOWUP,
                 InvocationType='Event',
                 Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': STACK_NAME}).encode()
                 )
