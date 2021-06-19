@@ -41,72 +41,72 @@ def ReturnStackStatus(response):
         'body': json.dumps({'type': '4', 'data': {'content': f'Current Stack Status: {StackStatus}'}})
     }
 
-def GetCommand(StackName, json_body):
-    """Get discord value and take CF action"""
-    client = boto3.client('cloudformation')
-    if json_body['data']['options'][0]['value'] == "start":        
-        try:
-            response = client.describe_stacks(StackName = StackName)
-            return ReturnStackStatus(response)
-        except Exception as e:
-            print(e)
-            if e.response['Error']['Code'] == "ValidationError":
-                application_id = json_body['application_id']
-                token = json_body['token']
-                try:
-                    response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Capabilities=['CAPABILITY_IAM'])
-                    client = boto3.client('lambda')
-                    try:
-                        response = client.invoke(
-                        FunctionName='DiscordFollowUp',
-                        InvocationType='Event',
-                        Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': StackName}).encode()
-                        )
-                    except Exception as e:
-                        print(e)
-                    return {
-                    'statusCode': 200, 
-                    'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
-                    }
-                except Exception as e:
-                    print(e)
-                    print(e.response)
-                    return {
-                    'statusCode': 200, 
-                    'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
-            }    
+# def GetCommand(StackName, json_body):
+#     """Get discord value and take CF action"""
+#     client = boto3.client('cloudformation')
+#     if json_body['data']['options'][0]['value'] == "start":        
+#         try:
+#             response = client.describe_stacks(StackName = StackName)
+#             return ReturnStackStatus(response)
+#         except Exception as e:
+#             print(e)
+#             if e.response['Error']['Code'] == "ValidationError":
+#                 application_id = json_body['application_id']
+#                 token = json_body['token']
+#                 try:
+#                     response = client.create_stack(StackName=StackName, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Capabilities=['CAPABILITY_IAM'])
+#                     client = boto3.client('lambda')
+#                     try:
+#                         response = client.invoke(
+#                         FunctionName='DiscordFollowUp',
+#                         InvocationType='Event',
+#                         Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': StackName}).encode()
+#                         )
+#                     except Exception as e:
+#                         print(e)
+#                     return {
+#                     'statusCode': 200, 
+#                     'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
+#                     }
+#                 except Exception as e:
+#                     print(e)
+#                     print(e.response)
+#                     return {
+#                     'statusCode': 200, 
+#                     'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
+#             }    
             
             
             
-    elif json_body['data']['options'][0]['value'] == "status":
-        try:
-            response = client.describe_stacks(StackName=StackName)
-            return ReturnStackStatus(response)
-        except Exception as e:
-            return ValidationError(e)
+#     elif json_body['data']['options'][0]['value'] == "status":
+#         try:
+#             response = client.describe_stacks(StackName=StackName)
+#             return ReturnStackStatus(response)
+#         except Exception as e:
+#             return ValidationError(e)
 
         
-    elif json_body['data']['options'][0]['value'] == "stop":
-        try:
-            application_id = json_body['application_id']
-            token = json_body['token']
-            response = client.describe_stacks(StackName=StackName) #Check to see if template is deployed
-            response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN) #If so delete the stack
-            try:
-                client = boto3.client('lambda')
-                response = client.invoke(
-                FunctionName='DiscordFollowUp',
-                InvocationType='Event',
-                Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': StackName}).encode()
-                )
-            except Exception as e:
-                print(e)
-            return {
-                    'statusCode': 200, 
-                    'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
-            }    
-        except Exception as e:
-            return ValidationError(e)
+#     elif json_body['data']['options'][0]['value'] == "stop":
+#         try:
+#             application_id = json_body['application_id']
+#             token = json_body['token']
+#             response = client.describe_stacks(StackName=StackName) #Check to see if template is deployed
+#             response = client.delete_stack(StackName=StackName, RoleARN=ROLE_ARN) #If so delete the stack
+#             try:
+#                 client = boto3.client('lambda')
+#                 response = client.invoke(
+#                 FunctionName='DiscordFollowUp',
+#                 InvocationType='Event',
+#                 Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': StackName}).encode()
+#                 )
+#             except Exception as e:
+#                 print(e)
+#             return {
+#                     'statusCode': 200, 
+#                     'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
+#             }    
+#         except Exception as e:
+#             return ValidationError(e)
 
 
 def lambda_handler(event, context):
@@ -115,7 +115,7 @@ def lambda_handler(event, context):
     timestamp = event['headers']["x-signature-timestamp"] 
     body = event['body']
     json_body = json.loads(event['body'])
-    print(json_body)
+    # print(json_body)
 
     try: 
         verify_key.verify(f'{timestamp}{body}'.encode(), bytes.fromhex(signature))
@@ -129,7 +129,72 @@ def lambda_handler(event, context):
              'statusCode': 401, 
              'body': json.dumps("Bad Signature")
          } 
-    return GetCommand(STACK_NAME, json_body)
+    
+    """Get discord value and take CF action"""
+    client = boto3.client('cloudformation')
+    if json_body['data']['options'][0]['value'] == "start":        
+        try:
+            response = client.describe_stacks(StackName = STACK_NAME)
+            return ReturnStackStatus(response)
+        except Exception as e:
+            print(e)
+            if e.response['Error']['Code'] == "ValidationError":
+                application_id = json_body['application_id']
+                token = json_body['token']
+                try:
+                    response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Capabilities=['CAPABILITY_IAM'])
+                    client = boto3.client('lambda')
+                    try:
+                        response = client.invoke(
+                        FunctionName='DiscordFollowUp',
+                        InvocationType='Event',
+                        Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': STACK_NAME}).encode()
+                        )
+                    except Exception as e:
+                        print(e)
+                    return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'Starting Server...'}})
+                    }
+                except Exception as e:
+                    print(e)
+                    print(e.response)
+                    return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
+            }
+    elif json_body['data']['options'][0]['value'] == "status":
+        try:
+            response = client.describe_stacks(StackName=STACK_NAME)
+            return ReturnStackStatus(response)
+        except Exception as e:
+            return ValidationError(e)
+
+        
+    elif json_body['data']['options'][0]['value'] == "stop":
+        try:
+            application_id = json_body['application_id']
+            token = json_body['token']
+            response = client.describe_stacks(StackName=STACK_NAME) #Check to see if template is deployed
+            response = client.delete_stack(StackName=STACK_NAME, RoleARN=ROLE_ARN) #If so delete the stack
+            try:
+                client = boto3.client('lambda')
+                response = client.invoke(
+                FunctionName='DiscordFollowUp',
+                InvocationType='Event',
+                Payload=json.dumps({'token': token, 'application_id': application_id, 'StackName': STACK_NAME}).encode()
+                )
+            except Exception as e:
+                print(e)
+            return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'Server is shutting down'}})
+            }    
+        except Exception as e:
+            return ValidationError(e)
+    
+    
+    # return GetCommand(STACK_NAME, json_body)
 
     
     
