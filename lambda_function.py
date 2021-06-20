@@ -49,6 +49,7 @@ def lambda_handler(event, context):
     timestamp = event['headers']["x-signature-timestamp"] 
     body = event['body']
     json_body = json.loads(event['body'])
+    print(json_body)
 
     try:
         #Verify signatures of body with Discord Public Key#
@@ -132,6 +133,11 @@ def lambda_handler(event, context):
             }    
         except Exception as e:
             return ValidationError(e)
+    else:
+        return {
+                    'statusCode': 200, 
+                    'body': json.dumps({'type': '4', 'data': {'content': 'An error 2 occurred'}})
+            }  
 
     
     
