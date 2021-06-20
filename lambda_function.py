@@ -67,7 +67,7 @@ def lambda_handler(event, context):
     
     #Get discord value and take CF action#
     client = boto3.client('cloudformation')
-    if json_body['data']['options'][0]['value'] == "start":        
+    if json_body['data']['options'][0]['name'] == "start":        
         try:
             response = client.describe_stacks(StackName = STACK_NAME)
             return ReturnStackStatus(response)
@@ -101,7 +101,7 @@ def lambda_handler(event, context):
                     'statusCode': 200, 
                     'body': json.dumps({'type': '4', 'data': {'content': 'An error occured starting the server'}})
             }
-    elif json_body['data']['options'][0]['value'] == "status":
+    elif json_body['data']['options'][0]['name'] == "status":
         #Checks the status of deployed stack#
         try:
             response = client.describe_stacks(StackName=STACK_NAME)
@@ -110,7 +110,7 @@ def lambda_handler(event, context):
             return ValidationError(e)
 
         
-    elif json_body['data']['options'][0]['value'] == "stop":
+    elif json_body['data']['options'][0]['name'] == "stop":
         #Destroys Stack if deployed#
         try:
             application_id = json_body['application_id']
