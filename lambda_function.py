@@ -79,7 +79,8 @@ def lambda_handler(event, context):
                 token = json_body['token']
                 try:
                     #Create the Stack#
-                    response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Capabilities=['CAPABILITY_IAM'])
+                    InstanceType = json_body['data']['options'][0]['options'][0]['name']
+                    response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Parameters=[f"InstanceType:{InstanceType}"], Capabilities=['CAPABILITY_IAM'])
                     client = boto3.client('lambda')
                     try:
                         #Invoke async Lambda function to send follow up message with application IP#
