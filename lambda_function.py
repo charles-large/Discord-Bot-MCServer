@@ -79,7 +79,7 @@ def lambda_handler(event, context):
                 token = json_body['token']
                 try:
                     #Create the Stack#
-                    InstanceType = json_body['data']['options'][0]['options'][0]['name']
+                    InstanceType = json_body['data']['options'][0]['value']
                     response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, Parameters=[f"InstanceType:{InstanceType}"], Capabilities=['CAPABILITY_IAM'])
                     client = boto3.client('lambda')
                     try:
