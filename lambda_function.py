@@ -79,7 +79,11 @@ def lambda_handler(event, context):
                 token = json_body['token']
                 try:
                     #Create the Stack#
-                    InstanceType = json_body['data']['options'][0]['value']
+                    InstanceType = json_body['data']['options'][0]['options'][0]['name']
+                    if InstanceType == "small":
+                        InstanceType = "t2.micro"
+                    elif InstanceType == "large":
+                        InstanceType = "t3.xlarge"
                     response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, \
                         Parameters=[
                             {"ParameterKey": "InstanceType", "ParameterValue":InstanceType}], Capabilities=['CAPABILITY_IAM'])
