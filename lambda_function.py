@@ -80,13 +80,21 @@ def lambda_handler(event, context):
                 try:
                     #Create the Stack#
                     InstanceType = json_body['data']['options'][0]['options'][0]['name']
-                    if InstanceType == "small":
+                    if InstanceType == "nsmall":
                         InstanceType = "t2.micro"
-                    elif InstanceType == "large":
+                        ServerState = "fresh"
+                    elif InstanceType == "nlarge":
                         InstanceType = "t3.xlarge"
+                        ServerState = "fresh"
+                    elif InstanceType == "csmall":
+                        InstanceType = "t2.micro"
+                        ServerState = "current"
+                    elif InstanceType == "clarge":
+                        InstanceType = "t3.xlarge"
+                        ServerState = "current"
                     response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, \
                         Parameters=[
-                            {"ParameterKey": "InstanceType", "ParameterValue":InstanceType}, {"ParameterKey": "LaunchScript", "ParameterValue": "fresh"}], Capabilities=['CAPABILITY_IAM'])
+                            {"ParameterKey": "InstanceType", "ParameterValue":InstanceType}, {"ParameterKey": "LaunchScript", "ParameterValue": {ServerState}}], Capabilities=['CAPABILITY_IAM'])
                     client = boto3.client('lambda')
                     try:
                         #Invoke async Lambda function to send follow up message with application IP#
