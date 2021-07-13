@@ -86,7 +86,7 @@ def lambda_handler(event, context):
                         InstanceType = "t3.xlarge"
                     response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, \
                         Parameters=[
-                            {"ParameterKey": "InstanceType", "ParameterValue":InstanceType}], Capabilities=['CAPABILITY_IAM'])
+                            {"ParameterKey": "InstanceType", "ParameterValue":InstanceType}, {"ParameterKey": "LaunchScript", "ParameterValue": "fresh"}], Capabilities=['CAPABILITY_IAM'])
                     client = boto3.client('lambda')
                     try:
                         #Invoke async Lambda function to send follow up message with application IP#
