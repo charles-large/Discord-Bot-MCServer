@@ -80,6 +80,7 @@ def lambda_handler(event, context):
                 try:
                     #Create the Stack#
                     InstanceType = json_body['data']['options'][0]['options'][0]['name']
+                    print(InstanceType)
                     if InstanceType == "nsmall":
                         InstanceType = "t2.micro"
                         ServerState = "fresh"
@@ -92,6 +93,7 @@ def lambda_handler(event, context):
                     elif InstanceType == "clarge":
                         InstanceType = "t3.xlarge"
                         ServerState = "current"
+                    print(InstanceType)
                     response = client.create_stack(StackName=STACK_NAME, TemplateURL=TEMPLATE_URL, RoleARN=ROLE_ARN, \
                         Parameters=[
                             {"ParameterKey": "InstanceType", "ParameterValue":InstanceType}, {"ParameterKey": "LaunchScript", "ParameterValue": ServerState}], Capabilities=['CAPABILITY_IAM'])
