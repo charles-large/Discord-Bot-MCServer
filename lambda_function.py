@@ -79,18 +79,17 @@ def lambda_handler(event, context):
                 token = json_body['token']
                 try:
                     #Create the Stack#
-                    InstanceType = json_body['data']['options'][0]['options'][0]['name']
-                    print(InstanceType)
-                    if InstanceType == "nsmall":
+                    Name = json_body['data']['options'][0]['options'][0]['name']
+                    if Name == "nsmall":
                         InstanceType = "t2.micro"
                         ServerState = "fresh"
-                    elif InstanceType == "nlarge":
+                    elif Name == "nlarge":
                         InstanceType = "t3.xlarge"
                         ServerState = "fresh"
-                    elif InstanceType == "csmall":
+                    elif Name == "csmall":
                         InstanceType = "t2.micro"
                         ServerState = "current"
-                    elif InstanceType == "clarge":
+                    elif Name == "clarge":
                         InstanceType = "t3.xlarge"
                         ServerState = "current"
                     print(InstanceType)
