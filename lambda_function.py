@@ -80,6 +80,7 @@ def lambda_handler(event, context):
                 try:
                     #Create the Stack#
                     Name = json_body['data']['options'][0]['options'][0]['name']
+                    print(Name)
                     if Name == "nsmall":
                         InstanceType = "t2.micro"
                         ServerState = "fresh"
